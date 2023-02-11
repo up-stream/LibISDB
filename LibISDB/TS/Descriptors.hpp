@@ -1330,6 +1330,64 @@ namespace LibISDB
 		uint8_t m_AdditionalBroadcastingID; /**< additional_broadcasting_identification */
 	};
 
+
+	/** パレンタルレート記述子 */
+	class ParentalRatingDescriptor
+		: public DescriptorTemplate<ParentalRatingDescriptor, 0x55>
+	{
+	public:
+		struct ParentalRatingInfo {
+			uint32_t CountryCode;         /**< country_code */
+			uint8_t Rating;               /**< rating */
+		};
+
+		ParentalRatingDescriptor();
+
+	// DescriptorBase
+		void Reset() override;
+
+	// ParentalRatingDescriptor
+		int GetParentalRatingInfoCount() const;
+		bool GetParentalRatingInfo(int Index, ReturnArg<ParentalRatingInfo> Info) const;
+
+	protected:
+		bool StoreContents(const uint8_t *pPayload) override;
+
+		std::vector<ParentalRatingInfo> m_ParentalRatingList;
+	};
+
+
+	/** データコンテンツ記述子 */
+	class DataContentDescriptor
+		: public DescriptorTemplate<DataContentDescriptor, 0xC7>
+	{
+	public:
+		DataContentDescriptor();
+
+	// DescriptorBase
+		void Reset() override;
+
+	// DataContentDescriptor
+		uint16_t GetDataComponentID() const noexcept { return m_DataComponentID; }
+		uint8_t GetEntryComponent() const noexcept { return m_EntryComponent; }
+		const DataBuffer * GetSelectorByte() const noexcept { return &m_SelectorByte; }
+		uint32_t GetLanguageCode() const noexcept { return m_LanguageCode; }
+		int GetComponentRefCount() const;
+		uint8_t GetComponentRef(int Index) const;
+		bool GetText(ReturnArg<ARIBString> Text) const;
+
+
+	protected:
+		bool StoreContents(const uint8_t *pPayload) override;
+
+		uint16_t m_DataComponentID;         /**< data_component_id */
+		uint8_t m_EntryComponent;           /**< entry_component */
+		DataBuffer m_SelectorByte;          /**< selector_byte */
+		std::vector<uint8_t> m_ComponentRefList; /**< component_ref */
+		uint32_t m_LanguageCode;            /**< ISO_639_language_code */
+		ARIBString m_Text;                  /**< text_char */
+	};
+
 }	// namespace LibISDB
 
 

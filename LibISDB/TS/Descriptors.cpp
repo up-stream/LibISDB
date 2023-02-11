@@ -2328,5 +2328,139 @@ bool SystemManagementDescriptor::StoreContents(const uint8_t *pPayload)
 	return true;
 }
 
+ParentalRatingDescriptor::ParentalRatingDescriptor()
+{
+	Reset();
+}
+
+
+
+void ParentalRatingDescriptor::Reset()
+{
+	DescriptorBase::Reset();
+
+	m_ParentalRatingList.clear();
+}
+
+
+int ParentalRatingDescriptor::GetParentalRatingInfoCount() const
+{
+	return static_cast<int>(m_ParentalRatingList.size());
+}
+
+
+bool ParentalRatingDescriptor::GetParentalRatingInfo(int Index, ReturnArg<ParentalRatingInfo> Info) const
+{
+	if (!Info)
+		return false;
+	if (static_cast<unsigned int>(Index) >= m_ParentalRatingList.size())
+		return false;
+
+	*Info = m_ParentalRatingList[Index];
+
+	return true;
+}
+
+
+bool ParentalRatingDescriptor::StoreContents(const uint8_t *pPayload)
+{
+	if (m_Tag != TAG)
+		return false;
+	if (m_Length < 4)
+		return false;
+
+	m_ParentalRatingList.resize(m_Length / 4);
+
+	size_t Pos = 0;
+
+	for (ParentalRatingInfo &Info : m_ParentalRatingList) {
+		Info.CountryCode             = Load24(&pPayload[Pos]);
+		Info.Rating                  = (pPayload[Pos + 3] & 0xFF);
+
+		Pos += 4;
+	}
+
+	return true;
+}
+
+
+DataContentDescriptor::DataContentDescriptor()
+{
+	Reset();
+}
+
+
+void DataContentDescriptor::Reset()
+{
+	DescriptorBase::Reset();
+
+	m_DataComponentID = 0;
+	m_EntryComponent = 0;
+	m_LanguageCode = COMPONENT_TAG_INVALID;
+
+	m_ComponentRefList.clear();
+	m_Text.clear();
+	m_SelectorByte.ClearSize();
+}
+
+
+int DataContentDescriptor::GetComponentRefCount() const
+{
+	return static_cast<int>(m_ComponentRefList.size());
+}
+
+
+uint8_t DataContentDescriptor::GetComponentRef(int Index) const
+{
+	if (static_cast<unsigned int>(Index) >= m_ComponentRefList.size())
+		return COMPONENT_TAG_INVALID;
+	return m_ComponentRefList[Index];
+}
+
+
+bool DataContentDescriptor::GetText(ReturnArg<ARIBString> Text) const
+{
+	if (!Text)
+		return false;
+
+	*Text = m_Text;
+
+	return !Text->empty();
+}
+
+bool DataContentDescriptor::StoreContents(const uint8_t *pPayload)
+{
+	if (m_Tag != TAG)
+		return false;
+	if (m_Length < 9)
+		return false;
+
+	m_DataComponentID = Load16(&pPayload[0]);
+	m_EntryComponent  = pPayload[2];
+	
+	int Pos = 3, Length;
+
+	Length = pPayload[Pos++];
+	m_SelectorByte.SetData(&pPayload[Pos], Length);
+	Pos += Length;
+
+	Length = pPayload[Pos++];
+	m_ComponentRefList.resize(Length);
+	for (int i = 0; i < Length; i++)
+		m_ComponentRefList[i] = pPayload[Pos + i];
+	Pos += Length;
+
+	m_LanguageCode = Load24(&pPayload[Pos]);
+	Pos += 3;
+	Length = pPayload[Pos++];
+	m_Text.clear();
+	if (Length > 0)
+		m_Text.assign(&pPayload[Pos], Length);
+	else 
+		m_Text.clear();
+
+	return true;
+}
+
 
 }	// namespace LibISDB

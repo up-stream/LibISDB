@@ -191,6 +191,8 @@ DescriptorBase * DescriptorBlock::CreateDescriptorInstance(uint8_t Tag)
 	case EmergencyInformationDescriptor::TAG      : return new EmergencyInformationDescriptor;
 	case DataComponentDescriptor::TAG             : return new DataComponentDescriptor;
 	case SystemManagementDescriptor::TAG          : return new SystemManagementDescriptor;
+	case DataContentDescriptor::TAG               : return new DataContentDescriptor;
+	case ParentalRatingDescriptor::TAG            : return new ParentalRatingDescriptor;
 	}
 
 	return new DescriptorBase;
